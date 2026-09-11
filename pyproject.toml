@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "shrimp-terminal"
+version = "0.1.0"
+description = "On-chain intel for the little guy on Robinhood Chain. Read-only. No advice."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Shrimp Terminal" }]
+keywords = ["robinhood-chain", "onchain", "terminal", "tui", "crypto", "read-only"]
+classifiers = [
+  "Environment :: Console",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = []
+
+[project.optional-dependencies]
+# The full-screen terminal. The plain CLI runs with zero dependencies.
+tui = ["textual>=0.60"]
+# Live Robinhood Chain adapter + the FastAPI service (added in a later phase).
+live = ["httpx>=0.27", "fastapi>=0.110", "uvicorn>=0.29"]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+shrimp = "shrimp.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/OWNER/shrimp-terminal"
+
+[tool.hatch.build.targets.wheel]
+packages = ["shrimp"]
+
+[tool.ruff]
+line-length = 100

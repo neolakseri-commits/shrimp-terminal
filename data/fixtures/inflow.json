@@ -1,0 +1,7 @@
+[
+  {"coin": "TruffleHog-7b08", "wallets_in": 54, "net_usdc": 12480.55, "rotations_in": 22, "venue": "PONS"},
+  {"coin": "INFERNET-d7f0",  "wallets_in": 35, "net_usdc": 9810.20, "rotations_in": 14, "venue": "UniV4"},
+  {"coin": "LUNAH-0070",     "wallets_in": 26, "net_usdc": 7420.00, "rotations_in": 9,  "venue": "UniV4"},
+  {"coin": "SCRAPS-9de2",    "wallets_in": 41, "net_usdc": 5133.10, "rotations_in": 18, "venue": "PONS"},
+  {"coin": "PACKZ-4a8c",     "wallets_in": 23, "net_usdc": 3980.75, "rotations_in": 6,  "venue": "PONS"}
+]

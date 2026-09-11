@@ -1,0 +1,5 @@
+[
+  {"wallet": "0xd60c7abcc6b15c26c525c0dd8828ffde32b07ab6", "sold": "Piecoin-1a01", "bought": "TruffleHog-7b08", "gap_s": 866, "grade": "clean", "sell_tx": "0x17da9c4b2f0e5a1c88e3d4f6a7b90c12de34f5a6b7c8d9e0f1a2b3c4d5e6f7a56d", "buy_tx": "0x20ed1a9b3c7d5e2f4a6b8c0d1e3f5a7b9c1d3e5f7a9b1c3d5e7f9a1b3c5d74729", "also_sold": []},
+  {"wallet": "0x9f22ab7c4e1d3f5a6b8c0d2e4f6a8b0c1d3e5f7a", "sold": "SCRAPS-9de2", "bought": "TruffleHog-7b08", "gap_s": 21, "grade": "clean", "sell_tx": "0x3a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9a", "buy_tx": "0x4b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9a0b", "also_sold": []},
+  {"wallet": "0x7e0a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2", "sold": "MINER-5ea6", "bought": "INFERNET-d7f0", "gap_s": 17, "grade": "ambiguous", "sell_tx": "0x6d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d", "buy_tx": "0x7e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e", "also_sold": ["PACKZ-4a8c", "SAGA-03dc"]}
+]
