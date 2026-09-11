@@ -19,7 +19,7 @@
 
 **on-chain intel for the little guy · Robinhood Chain · read-only**
 
-![tests](https://img.shields.io/badge/tests-passing-FF6B6B)
+![tests](https://img.shields.io/badge/tests-passing-brightgreen)
 ![python](https://img.shields.io/badge/python-3.13-2B2B2B)
 ![chain](https://img.shields.io/badge/chain-Robinhood-FF4D6D)
 ![license](https://img.shields.io/badge/license-MIT-8A5A5A)
