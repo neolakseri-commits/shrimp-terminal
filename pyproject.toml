@@ -29,7 +29,7 @@ dev = ["pytest>=8", "ruff>=0.5", "textual>=0.60"]
 shrimp = "shrimp.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/OWNER/shrimp-terminal"
+Homepage = "https://github.com/neolakseri-commits/shrimp-terminal"
 
 [tool.hatch.build.targets.wheel]
 packages = ["shrimp"]

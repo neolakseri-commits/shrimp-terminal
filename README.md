@@ -44,7 +44,7 @@ returns. It shows you what the chain recorded, and where to check it yourself.
 ## Quickstart
 
 ```bash
-git clone https://github.com/OWNER/shrimp-terminal
+git clone https://github.com/neolakseri-commits/shrimp-terminal
 cd shrimp-terminal
 
 # The plain CLI runs with zero dependencies on a fixture sample:
