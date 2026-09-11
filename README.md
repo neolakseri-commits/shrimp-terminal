@@ -64,12 +64,17 @@ adapter plugs in behind the same commands later.
 
 ## Four views, one dataset
 
+![Shrimp Terminal — FEED view](docs/screenshots/feed.svg)
+
 | View | Hotkey | What it shows |
 |------|:------:|---------------|
 | **FEED**  | `F` | every observed trade in the order it happened, with tx hashes |
 | **RADAR** | `R` | coins ranked by observed inflow, with all parts visible |
-| **FLOW**  | `L` | sold-A → bought-B rotations as a flow diagram *(planned)* |
-| **MAP**   | `M` | wallets and coins laid out in space *(planned)* |
+| **FLOW**  | `L` | sold-A → bought-B rotations grouped by route |
+| **MAP**   | `M` | coins laid out by venue, sized by observed inflow |
+
+`Space` pauses the replay; `Q` quits. The top bar is the shared session clock —
+mode (`FIXTURE` / `REPLAY` / `LIVE`) and UTC time, mirrored on every view.
 
 ## What it does for a shrimp
 
@@ -147,8 +152,7 @@ shrimp-terminal/
 ## Roadmap
 
 - [x] Repo skeleton, palette, fixtures, CLI (`feed` / `radar` / `rotations`)
-- [x] Textual TUI skeleton (FEED + RADAR on fixtures)
-- [ ] FLOW and MAP views
+- [x] Full Textual TUI — FEED (live replay) · RADAR · FLOW · MAP, shared clock
 - [ ] Whale Watch · Smart Money · Fresh Launches · Risk Radar · My Bags
 - [ ] Live Robinhood Chain adapter (Alchemy / public RPC / indexer)
 - [ ] FastAPI service + `web/` site sharing one dataset

@@ -23,7 +23,7 @@ dependencies = []
 tui = ["textual>=0.60"]
 # Live Robinhood Chain adapter + the FastAPI service (added in a later phase).
 live = ["httpx>=0.27", "fastapi>=0.110", "uvicorn>=0.29"]
-dev = ["pytest>=8", "ruff>=0.5"]
+dev = ["pytest>=8", "ruff>=0.5", "textual>=0.60"]
 
 [project.scripts]
 shrimp = "shrimp.cli:main"
