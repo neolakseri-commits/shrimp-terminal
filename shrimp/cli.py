@@ -15,22 +15,40 @@ Commands:
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
+import sys
 
-from . import __version__, data, theme
-
-_ASCII = Path(__file__).resolve().parent.parent / "docs" / "ascii" / "shrimp.txt"
+from . import __version__, brand, data, theme
 
 TAGLINE = "on-chain intel for the little guy  .  Robinhood Chain  .  read-only"
 
 
+def _ensure_utf8() -> bool:
+    """Block glyphs need UTF-8 out. Switch the stream over; report if it stuck."""
+    enc = (getattr(sys.stdout, "encoding", "") or "").lower()
+    if "utf" in enc:
+        return True
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+        return True
+    except (AttributeError, ValueError, OSError):
+        return False
+
+
 def banner() -> str:
-    art = _ASCII.read_text(encoding="utf-8") if _ASCII.exists() else "  (o )~"
-    lines = [theme.coral(line) for line in art.splitlines()]
+    """The pixel shrimp beside the SHRIMP wordmark, then the tagline."""
+    if not (_ensure_utf8() and theme._COLOR):
+        # No colour, or a legacy codepage that cannot take block glyphs: plain banner.
+        return (theme.coral("  (o )~  ", bold=True)
+                + theme.salmon("SHRIMP TERMINAL", bold=True)
+                + theme.muted(f"  v{__version__}\n  " + TAGLINE))
+    shrimp = brand.shrimp_lines("ansi")
+    word = brand.wordmark_ansi(theme.CORAL)
+    # centre the 5-row wordmark against the taller shrimp, joined side by side
+    pad = [""] * ((len(shrimp) - len(word)) // 2)
+    right = pad + word + [""] * (len(shrimp) - len(word) - len(pad))
+    lines = [f"  {s}   {r}" for s, r in zip(shrimp, right)]
     lines.append("")
-    lines.append(theme.salmon("  S H R I M P   T E R M I N A L", bold=True)
-                 + theme.muted(f"   v{__version__}"))
-    lines.append(theme.muted("  " + TAGLINE))
+    lines.append(theme.muted("  " + TAGLINE) + theme.muted(f"   v{__version__}"))
     return "\n".join(lines)
 
 
@@ -88,6 +106,40 @@ def cmd_rotations(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_whales(_: argparse.Namespace) -> int:
+    print(banner())
+    print(_hr("WHALES  .  large wallets  .  observed 24h net usdc"))
+    print(theme.muted("  wallet          band    net 24h     buys/sells   last"))
+    for w in data.load_whales():
+        band = theme.paint(w.tag.ljust(5), theme.sea if w.tag == "mega" else theme.salmon)
+        net = theme.paint(f"{w.net_24h:>+11,.0f}", theme.GOOD if w.net_24h >= 0 else theme.PINK)
+        side = theme.pink("SELL") if w.last_side == "sell" else theme.sea("BUY ")
+        print(
+            f"  {w.wallet_short}  {band}  {net}   {w.buys:>3}/{w.sells:<3}   "
+            f"{side} {theme.salmon(w.last_coin)} {theme.muted(w.last_hhmmss)}"
+        )
+    print(_hr())
+    print(theme.muted("  a size band from observed flow, never an identity. no advice.\n"))
+    return 0
+
+
+def cmd_smart(_: argparse.Namespace) -> int:
+    print(banner())
+    print(_hr("SMART MONEY  .  strong observed history  .  realised pnl"))
+    print(theme.muted("  wallet          kind      pnl usdc     win    trades   now in"))
+    for s in data.load_smart():
+        kind = theme.paint(s.tag.ljust(7), theme.salmon)
+        pnl = theme.paint(f"{s.pnl_usdc:>+10,.0f}", theme.GOOD if s.pnl_usdc >= 0 else theme.PINK)
+        win = theme.paint(f"{s.win_pct:>3}%", theme.GOOD if s.win_pct >= 60 else theme.MUTED)
+        print(
+            f"  {s.wallet_short}  {kind}  {pnl}   {win}   {s.trades:>5}   "
+            f"{theme.salmon(s.now_in)}"
+        )
+    print(_hr())
+    print(theme.muted("  past observed performance is not a prediction. no advice.\n"))
+    return 0
+
+
 def cmd_tui(_: argparse.Namespace) -> int:
     try:
         from .tui.app import run as run_tui
@@ -106,6 +158,8 @@ def cmd_default(_: argparse.Namespace) -> int:
     print(f"    {theme.salmon('shrimp feed')}       stream of observed trades")
     print(f"    {theme.salmon('shrimp radar')}      ranked observed inflow")
     print(f"    {theme.salmon('shrimp rotations')}  sold A -> bought B, graded")
+    print(f"    {theme.salmon('shrimp whales')}     large wallets by observed 24h net usdc")
+    print(f"    {theme.salmon('shrimp smart')}      wallets with a strong observed history")
     print(f"    {theme.salmon('shrimp tui')}        full-screen terminal (needs textual)")
     print(theme.muted("\n  read-only . no advice . no promises . data is a fixture sample\n"))
     return 0
@@ -122,6 +176,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("feed", help="stream of observed trades").set_defaults(func=cmd_feed)
     sub.add_parser("radar", help="ranked observed inflow").set_defaults(func=cmd_radar)
     sub.add_parser("rotations", help="sold A -> bought B, graded").set_defaults(func=cmd_rotations)
+    sub.add_parser("whales", help="large wallets by observed 24h net usdc").set_defaults(func=cmd_whales)
+    sub.add_parser("smart", help="wallets with a strong observed history").set_defaults(func=cmd_smart)
     sub.add_parser("tui", help="full-screen terminal (needs textual)").set_defaults(func=cmd_tui)
     return p
 

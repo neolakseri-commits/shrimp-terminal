@@ -25,17 +25,19 @@ from typing import ClassVar
 
 from rich.text import Text
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.widgets import ContentSwitcher, DataTable, Footer, Static
 
-from .. import data, theme
+from .. import brand, data, theme
 from ..models import Sequence
 from ..sample import WINDOW_END, WINDOW_MIN
 
-SHRIMP = "(o )~"
 TAPE_CAP = 80
-TABS = [("1", "radar", "RADAR"), ("2", "flow", "FLOW"), ("3", "map", "MAP")]
+TABS = [
+    ("1", "radar", "RADAR"), ("2", "flow", "FLOW"), ("3", "map", "MAP"),
+    ("4", "whales", "WHALES"), ("5", "smart", "SMART"),
+]
 
 
 def _short(addr: str) -> str:
@@ -58,7 +60,7 @@ class TopBar(Static):
 
     def render(self) -> Text:
         t = Text()
-        t.append(f" {SHRIMP} ", style=f"bold {theme.CORAL}")
+        t.append(" (o~ ", style=f"bold {theme.CORAL}")
         t.append("SHRIMP", style=f"bold {theme.SALMON}")
         t.append("   ", style=theme.MUTED)
         for key, vid, label in TABS:
@@ -78,8 +80,21 @@ class TopBar(Static):
 
 
 # --------------------------------------------------------------------------- #
-# Left board - TOP INFLOW                                                     #
+# Left column - brand mark + TOP INFLOW                                       #
 # --------------------------------------------------------------------------- #
+class BrandMark(Static):
+    """The pixel shrimp (terminal half-blocks) over the wordmark."""
+
+    def render(self) -> Text:
+        t = Text()
+        for line in brand.shrimp_lines("rich"):
+            t.append_text(Text.from_markup(line))
+            t.append("\n")
+        t.append("SHRIMP", style=f"bold {theme.CORAL}")
+        t.append("  read-only", style=theme.MUTED)
+        return t
+
+
 class InflowBoard(Static):
     def render(self) -> Text:
         rows = data.load_inflow()
@@ -180,6 +195,43 @@ class MapView(Static):
         return t
 
 
+class WhalesView(Static):
+    def render(self) -> Text:
+        t = Text()
+        t.append(" WHALES", style=f"bold {theme.PINK}")
+        t.append("  .  large wallets  .  observed 24h net usdc\n\n", style=theme.MUTED)
+        t.append("  wallet        band  net 24h   b/s   last\n", style=theme.MUTED)
+        for w in data.load_whales():
+            band_style = theme.SEA if w.tag == "mega" else theme.SALMON
+            t.append(f"  {w.wallet_short} ", style=theme.SHELL)
+            t.append(f"{w.tag:<5} ", style=band_style)
+            t.append(f"{w.net_24h:>+8,.0f} ", style=theme.GOOD if w.net_24h >= 0 else theme.PINK)
+            t.append(f"{w.buys:>2}/{w.sells:<2} ", style=theme.MUTED)
+            arrow = "v" if w.last_side == "sell" else "^"
+            t.append(f"{arrow} ", style=theme.PINK if w.last_side == "sell" else theme.SEA)
+            t.append(f"{w.last_coin[:8]}\n", style=theme.SALMON)
+        t.append("\n  a size band from observed flow, never an identity. no advice.\n",
+                 style=theme.MUTED)
+        return t
+
+
+class SmartView(Static):
+    def render(self) -> Text:
+        t = Text()
+        t.append(" SMART MONEY", style=f"bold {theme.PINK}")
+        t.append("  .  strong observed history  .  realised pnl\n\n", style=theme.MUTED)
+        t.append("  wallet        kind    pnl usdc  win  now in\n", style=theme.MUTED)
+        for s in data.load_smart():
+            t.append(f"  {s.wallet_short} ", style=theme.SHELL)
+            t.append(f"{s.tag:<7} ", style=theme.SALMON)
+            t.append(f"{s.pnl_usdc:>+8,.0f} ", style=theme.GOOD if s.pnl_usdc >= 0 else theme.PINK)
+            t.append(f"{s.win_pct:>3}% ", style=theme.GOOD if s.win_pct >= 60 else theme.MUTED)
+            t.append(f"{s.now_in[:8]}\n", style=theme.SALMON)
+        t.append("\n  past observed performance is not a prediction. no advice.\n",
+                 style=theme.MUTED)
+        return t
+
+
 # --------------------------------------------------------------------------- #
 # Right panel - TAPE                                                          #
 # --------------------------------------------------------------------------- #
@@ -230,22 +282,22 @@ class ShrimpApp(App):
     TopBar {{ dock: top; height: 1; background: {theme.INK}; color: {theme.SHELL};
               border-bottom: solid {theme.MUTED}; }}
     #body {{ height: 1fr; }}
-    InflowBoard {{ width: 34; padding: 1 1; border-right: solid {theme.MUTED};
-                   color: {theme.SHELL}; }}
-    #center {{ width: 1fr; padding: 1 2; }}
+    #left {{ width: 34; border-right: solid {theme.MUTED}; overflow-y: auto; }}
+    BrandMark {{ padding: 1 1 0 2; height: auto; }}
+    InflowBoard {{ padding: 1 1; color: {theme.SHELL}; height: auto; }}
+    #center {{ width: 1fr; padding: 1 1; }}
     Tape {{ width: 46; border-left: solid {theme.MUTED}; padding: 1 1; }}
     #tape-head {{ height: 2; color: {theme.SHELL}; }}
     #tape-table {{ height: 1fr; }}
-    RadarView, FlowView, MapView {{ height: 1fr; }}
+    RadarView, FlowView, MapView, WhalesView, SmartView {{ height: 1fr; }}
     """
 
     BINDINGS: ClassVar[list[tuple[str, str, str]]] = [
         ("1", "view('radar')", "RADAR"),
         ("2", "view('flow')", "FLOW"),
         ("3", "view('map')", "MAP"),
-        ("r", "view('radar')", "RADAR"),
-        ("l", "view('flow')", "FLOW"),
-        ("m", "view('map')", "MAP"),
+        ("4", "view('whales')", "WHALES"),
+        ("5", "view('smart')", "SMART"),
         ("space", "toggle_pause", "pause"),
         ("q", "quit", "quit"),
     ]
@@ -260,11 +312,15 @@ class ShrimpApp(App):
     def compose(self) -> ComposeResult:
         yield TopBar()
         with Horizontal(id="body"):
-            yield InflowBoard()
+            with Vertical(id="left"):
+                yield BrandMark()
+                yield InflowBoard()
             with ContentSwitcher(initial="map", id="center"):
                 yield RadarView(id="radar")
                 yield FlowView(id="flow")
                 yield MapView(id="map")
+                yield WhalesView(id="whales")
+                yield SmartView(id="smart")
             yield Tape()
         yield Footer()
 

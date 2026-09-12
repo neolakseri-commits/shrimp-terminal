@@ -52,6 +52,8 @@ python -m shrimp            # banner + commands
 python -m shrimp feed       # stream of observed trades
 python -m shrimp radar      # ranked observed inflow (the board)
 python -m shrimp rotations  # wallets that sold A then bought B, graded
+python -m shrimp whales     # large wallets by observed 24h net USDC
+python -m shrimp smart      # wallets with a strong observed history
 
 # The full-screen terminal (optional):
 pip install textual
@@ -62,24 +64,27 @@ No RPC keys, no account, nothing to sign. The shipped data is a small recorded
 sample so the terminal looks alive on the first command; a live Robinhood Chain
 adapter plugs in behind the same commands later.
 
-## Three views, one dataset
+## Five views, one dataset
 
 ![Shrimp Terminal — MAP view](docs/screenshots/map.svg)
 
-The full-screen terminal is three panels sharing one session clock: a ranked
-**TOP INFLOW** board on the left, the active view in the center, and a live
-**TAPE** of observed sequences streaming on the right.
+The full-screen terminal is three panels sharing one session clock: the pixel
+shrimp over a ranked **TOP INFLOW** board on the left, the active view in the
+center, and a live **TAPE** of observed sequences streaming on the right.
 
 | View | Hotkey | What it shows |
 |------|:------:|---------------|
-| **RADAR** | `1` / `R` | coins ranked by observed inflow — score, wallets, net USDC, 1h change, bar |
-| **FLOW**  | `2` / `L` | the fan of coins rotating into the single hottest destination |
-| **MAP**   | `3` / `M` | the hero graph — *N wallets sold A → bought B*, with the evidence beneath it |
+| **RADAR**  | `1` | coins ranked by observed inflow — score, wallets, net USDC, 1h change, bar |
+| **FLOW**   | `2` | the fan of coins rotating into the single hottest destination |
+| **MAP**    | `3` | the hero graph — *N wallets sold A → bought B*, with the evidence beneath it |
+| **WHALES** | `4` | large wallets ranked by observed 24h net USDC, with their last move |
+| **SMART**  | `5` | wallets with a strong observed history — realised PnL, hit rate, what they hold |
 
 `Space` pauses the replay; `Q` quits. The top bar is the shared session clock —
 mode (`FIXTURE` / `REPLAY` / `LIVE`), speed and UTC time, mirrored on every view.
 The right-hand **TAPE** is the live feed; `shrimp feed` prints the same stream in
-the plain CLI.
+the plain CLI. The mascot and the `SHRIMP` wordmark are drawn from a colour grid
+as terminal half-blocks — no image files, no font.
 
 ## What it does for a shrimp
 
@@ -159,7 +164,9 @@ shrimp-terminal/
 - [x] Repo skeleton, palette, fixtures, CLI (`feed` / `radar` / `rotations`)
 - [x] Full Textual TUI — three panels (TOP INFLOW · view · live TAPE), shared clock
 - [x] RADAR (board), FLOW (fan), MAP (hero graph) over a rich sample dataset
-- [ ] Whale Watch · Smart Money · Fresh Launches · Risk Radar · My Bags
+- [x] Pixel-shrimp mascot + wordmark, drawn as terminal half-blocks (no assets)
+- [x] Whale Watch and Smart Money boards (`shrimp whales` / `shrimp smart`)
+- [ ] Fresh Launches · Risk Radar · My Bags
 - [ ] Multi-chain: Solana adapter (Pump.fun / Raydium), read-only
 - [ ] Live Robinhood Chain adapter (Alchemy / public RPC / indexer)
 - [ ] FastAPI service + `web/` site sharing one dataset

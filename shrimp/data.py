@@ -13,7 +13,16 @@ from datetime import datetime
 from pathlib import Path
 
 from . import sample
-from .models import FlowSource, InflowRow, Rotation, RouteEdge, Sequence, Trade
+from .models import (
+    FlowSource,
+    InflowRow,
+    Rotation,
+    RouteEdge,
+    Sequence,
+    SmartWallet,
+    Trade,
+    Whale,
+)
 
 _FIXTURES = Path(__file__).resolve().parent.parent / "data" / "fixtures"
 
@@ -96,3 +105,13 @@ def hot_route() -> RouteEdge:
 def flow_sources(dest: str | None = None) -> list[FlowSource]:
     """Coins rotating into the chosen destination - the FLOW fan."""
     return sample.flow_sources(dest)
+
+
+def load_whales(n: int = 12) -> list[Whale]:
+    """Large wallets ranked by observed 24h net USDC - the WHALES board."""
+    return sample.whales(n)
+
+
+def load_smart(n: int = 12) -> list[SmartWallet]:
+    """Wallets with a strong observed history - the SMART MONEY board."""
+    return sample.smart_money(n)

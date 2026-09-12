@@ -15,7 +15,7 @@ from __future__ import annotations
 import random
 from datetime import UTC, datetime, timedelta
 
-from .models import FlowSource, RouteEdge, Sequence
+from .models import FlowSource, RouteEdge, Sequence, SmartWallet, Whale
 
 SEED = 7
 WINDOW_MIN = 30
@@ -77,3 +77,38 @@ def tape(n: int = 240) -> list[Sequence]:
         ))
     seqs.sort(key=lambda s: s.ts)
     return seqs
+
+
+def whales(n: int = 12) -> list[Whale]:
+    """Large wallets, ranked by observed 24h net USDC. A size band, never an identity."""
+    rng = random.Random(SEED + 1)
+    out: list[Whale] = []
+    for _ in range(n):
+        net = round(rng.uniform(-40_000, 120_000), -2)
+        tag = "mega" if abs(net) > 60_000 else ("orca" if abs(net) > 25_000 else "shark")
+        buys, sells = rng.randint(3, 40), rng.randint(3, 40)
+        last_side = "buy" if net >= 0 else rng.choice(["buy", "sell"])
+        ts = WINDOW_END - timedelta(seconds=rng.uniform(0, WINDOW_MIN * 60))
+        out.append(Whale(
+            wallet="0x" + _hex(rng, 40), tag=tag, net_24h=net, buys=buys, sells=sells,
+            last_side=last_side, last_coin=rng.choice(_COINS), last_ts=ts,
+        ))
+    out.sort(key=lambda w: w.net_24h, reverse=True)
+    return out
+
+
+def smart_money(n: int = 12) -> list[SmartWallet]:
+    """Wallets with a strong observed history, ranked by realised PnL."""
+    rng = random.Random(SEED + 2)
+    tags = ["smart", "sniper", "rotator"]
+    out: list[SmartWallet] = []
+    for _ in range(n):
+        pnl = round(rng.uniform(-8_000, 60_000), -1)
+        win = round(rng.uniform(0.42, 0.92), 2)
+        out.append(SmartWallet(
+            wallet="0x" + _hex(rng, 40), tag=rng.choice(tags), pnl_usdc=pnl,
+            win_rate=win, trades=rng.randint(12, 240),
+            best_coin=rng.choice(_COINS), now_in=rng.choice(_COINS),
+        ))
+    out.sort(key=lambda s: s.pnl_usdc, reverse=True)
+    return out

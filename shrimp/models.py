@@ -115,3 +115,46 @@ class FlowSource:
     coin: str
     wallets: int
     grade: str
+
+
+@dataclass(frozen=True)
+class Whale:
+    """A large wallet, ranked by observed 24h net USDC moved on the venues."""
+
+    wallet: str
+    tag: str          # "mega" | "shark" | "orca" - a size band, observed not assigned
+    net_24h: float    # net USDC over the last 24h (buys minus sells)
+    buys: int
+    sells: int
+    last_side: str    # "buy" | "sell"
+    last_coin: str
+    last_ts: datetime
+
+    @property
+    def wallet_short(self) -> str:
+        return f"{self.wallet[:6]}..{self.wallet[-4:]}"
+
+    @property
+    def last_hhmmss(self) -> str:
+        return self.last_ts.astimezone(UTC).strftime("%H:%M:%S")
+
+
+@dataclass(frozen=True)
+class SmartWallet:
+    """A wallet with a strong observed history - realised PnL and hit rate."""
+
+    wallet: str
+    tag: str          # "smart" | "sniper" | "rotator"
+    pnl_usdc: float   # realised PnL over the sample window
+    win_rate: float   # 0..1 share of closed trades in profit
+    trades: int
+    best_coin: str
+    now_in: str       # the coin this wallet is holding right now
+
+    @property
+    def wallet_short(self) -> str:
+        return f"{self.wallet[:6]}..{self.wallet[-4:]}"
+
+    @property
+    def win_pct(self) -> int:
+        return round(self.win_rate * 100)

@@ -19,6 +19,8 @@ os.environ["NO_COLOR"] = "1"
         (["feed"], "FEED"),
         (["radar"], "RADAR"),
         (["rotations"], "ROTATIONS"),
+        (["whales"], "WHALES"),
+        (["smart"], "SMART MONEY"),
     ],
 )
 def test_commands_run_and_print_their_section(argv, marker, capsys):

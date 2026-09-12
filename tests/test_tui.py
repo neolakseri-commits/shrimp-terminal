@@ -14,7 +14,15 @@ textual = pytest.importorskip("textual")
 
 from textual.widgets import ContentSwitcher, DataTable
 
-from shrimp.tui.app import FlowView, MapView, RadarView, ShrimpApp, Tape
+from shrimp.tui.app import (
+    FlowView,
+    MapView,
+    RadarView,
+    ShrimpApp,
+    SmartView,
+    Tape,
+    WhalesView,
+)
 
 
 def test_tui_streams_tape_and_switches_all_views():
@@ -30,7 +38,10 @@ def test_tui_streams_tape_and_switches_all_views():
             assert tape.row_count >= 2
 
             # default view is MAP; switch through every view by hotkey
-            for key, expect in [("1", "radar"), ("2", "flow"), ("3", "map")]:
+            for key, expect in [
+                ("1", "radar"), ("2", "flow"), ("3", "map"),
+                ("4", "whales"), ("5", "smart"),
+            ]:
                 await pilot.press(key)
                 await pilot.pause(0.01)
                 assert app.query_one(ContentSwitcher).current == expect
@@ -42,5 +53,7 @@ def test_tui_streams_tape_and_switches_all_views():
             app.query_one(RadarView).render()
             app.query_one(FlowView).render()
             app.query_one(MapView).render()
+            app.query_one(WhalesView).render()
+            app.query_one(SmartView).render()
 
     asyncio.run(scenario())
