@@ -1,0 +1,392 @@
+<!--
+  Shrimp Terminal — web view (single file, read-only demo over a shaped sample).
+  Body-only content so it publishes as a Claude Artifact as-is and also opens
+  directly in a browser. No advice, no live chain calls.
+-->
+<meta charset="utf-8">
+<title>Shrimp Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root{
+    --bg:#0A0605; --surface:#140D0B; --raise:#1C1310;
+    --border:#37201B; --border2:#4C2C24;
+    --primary:#FF6A4D; --primary-dim:#2A130E; --glow:rgba(255,106,77,.55);
+    --text:#F4EAE6; --secondary:#B39B93; --muted:#7C625B; --faint:#5A453F;
+    --up:#7BD6A6; --sans:'Archivo',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --strip:50px; --bar:32px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:var(--mono); font-size:12.5px; line-height:1.45;
+    font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased;
+  }
+  .app{height:100vh;display:grid;grid-template-rows:var(--strip) var(--bar) minmax(0,1fr)}
+  b{font-weight:600}
+
+  /* ---------- top strip ---------- */
+  .strip{display:flex;align-items:center;gap:16px;height:var(--strip);
+    padding:0 12px;border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,#120B09,var(--bg));white-space:nowrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{width:40px;height:30px;filter:drop-shadow(0 0 5px var(--glow))}
+  .wm{font-family:var(--mono);font-weight:700;font-size:17px;letter-spacing:.14em;color:var(--primary)}
+  .tag{font-size:11px;color:var(--muted);letter-spacing:.02em}
+  .views{display:flex;height:100%;margin-left:6px}
+  .views button{height:100%;border:0;background:none;padding:0 14px;cursor:pointer;
+    color:var(--secondary);font-weight:700;letter-spacing:.09em;font-size:12px;
+    text-transform:uppercase;box-shadow:inset 0 -2px 0 transparent;transition:.12s}
+  .views button kbd{margin-right:6px;color:var(--faint);font-weight:400}
+  .views button:hover{color:var(--text)}
+  .views button.on{color:var(--text);box-shadow:inset 0 -2px 0 var(--primary)}
+  .status{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--secondary)}
+  .badge{border:1px dashed var(--secondary);color:var(--text);font-weight:600;font-size:10.5px;
+    letter-spacing:.06em;padding:2px 7px;text-transform:uppercase}
+  .badge.paused{border-style:solid;border-color:var(--primary);color:var(--primary)}
+  .clock b{color:var(--text)} .clock{color:var(--muted)}
+  .range{color:var(--faint)}
+  .status button{background:none;border:1px solid var(--border);color:var(--secondary);
+    font:inherit;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    padding:3px 9px;cursor:pointer}
+  .status button:hover{color:var(--text);border-color:var(--secondary)}
+
+  /* ---------- workbar (view summary) ---------- */
+  .workbar{display:flex;align-items:center;gap:12px;height:var(--bar);padding:0 14px;
+    border-bottom:1px solid var(--border);background:var(--surface);
+    font-size:11.5px;color:var(--secondary);white-space:nowrap;overflow:hidden}
+  .workbar .eb{text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-size:10.5px}
+  .workbar b{color:var(--text)} .workbar .to{color:var(--primary);font-weight:600}
+  .workbar .sep{width:1px;height:16px;background:var(--border)}
+
+  /* ---------- body ---------- */
+  .body{display:grid;grid-template-columns:216px minmax(0,1fr) 340px;min-height:0}
+  .col{min-height:0;overflow:auto}
+  .col::-webkit-scrollbar{width:9px;height:9px}
+  .col::-webkit-scrollbar-thumb{background:var(--border);border:2px solid var(--bg)}
+  .rail{border-right:1px solid var(--border);background:var(--bg)}
+  .tape-col{border-left:1px solid var(--border);background:var(--bg)}
+  .ph{position:sticky;top:0;background:var(--bg);padding:11px 13px 7px;z-index:2;border-bottom:1px solid var(--border)}
+  .ph .eb{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .ph h2{margin:2px 0 0;font-family:var(--mono);font-weight:700;font-size:12px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--secondary)}
+
+  /* rail: TOP INFLOW */
+  .inf{display:grid;grid-template-columns:30px minmax(0,1fr);gap:0 9px;align-items:baseline;
+    padding:8px 13px;border-bottom:1px solid rgba(55,32,27,.55);cursor:default}
+  .inf:hover{background:var(--surface)}
+  .inf .sc{font-family:var(--sans);font-weight:800;font-size:19px;color:var(--primary);text-align:right;line-height:1}
+  .inf .cn{color:var(--text);font-weight:600}
+  .inf .sub{grid-column:2;color:var(--muted);font-size:10.5px;margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pct{font-weight:600} .pct.up{color:var(--up)} .pct.dn{color:var(--secondary)}
+
+  /* ---------- center ---------- */
+  .center{position:relative;min-width:0;overflow:hidden}
+  .view{position:absolute;inset:0;display:none;flex-direction:column}
+  .view.on{display:flex}
+
+  /* RADAR table */
+  .rlist{overflow:auto;min-height:0}
+  table.rt{width:100%;border-collapse:collapse}
+  .rt th,.rt td{height:29px;padding:0 10px;text-align:left;white-space:nowrap;
+    border-bottom:1px solid var(--border)}
+  .rt th{position:sticky;top:0;background:var(--bg);color:var(--muted);font-weight:500;
+    font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;z-index:2}
+  .rt th.n,.rt td.n{text-align:right}
+  .rt tr.row:hover td{background:var(--surface)}
+  .rt tr.row.hot td:first-child{box-shadow:inset 2px 0 0 var(--primary)}
+  .rt .rank{color:var(--faint)}
+  .rt .sc{font-family:var(--sans);font-weight:700;font-size:15px;color:var(--primary)}
+  .rt .cn{color:var(--text);font-weight:600}
+  .rt .ad{color:var(--faint);font-size:10.5px;margin-left:7px}
+  .rt .frm{color:var(--secondary);max-width:150px;overflow:hidden;text-overflow:ellipsis}
+  .rt .frm b{color:var(--text)}
+  .spark{display:inline-block;height:8px;border-radius:1px;vertical-align:middle;
+    background:linear-gradient(90deg,var(--primary),#FF9E7A);width:0;
+    transition:width .8s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 8px var(--glow)}
+
+  /* FLOW */
+  .flowstage{flex:1;min-height:0;position:relative}
+  .flow-svg{width:100%;height:100%;display:block}
+  .flow-svg text{font-family:var(--mono);fill:var(--text)}
+  .flow-svg text.sym{font-size:13px;font-weight:600}
+  .flow-svg text.n{font-size:11px;fill:var(--secondary)}
+  .flow-svg text.role{font-size:10px;letter-spacing:.14em;fill:var(--muted)}
+  .flow-svg text.big{font-family:var(--sans);font-weight:800;font-size:26px;fill:var(--text)}
+  .legend{padding:7px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .legend b{color:var(--secondary)}
+
+  /* MAP */
+  .mapstage{flex:1;min-height:0;position:relative;overflow:hidden}
+  .map-svg{width:100%;height:100%;display:block}
+  .map-svg .nlabel{font-family:var(--mono);font-size:11px;fill:var(--secondary)}
+  .caption{position:absolute;left:26px;bottom:26px;max-width:62%;pointer-events:none}
+  .caption .n{font-family:var(--sans);font-weight:800;font-size:clamp(40px,6vw,64px);
+    line-height:.92;color:var(--text);letter-spacing:-.02em}
+  .caption .n .u{color:var(--primary)}
+  .caption .pair{font-family:var(--sans);font-weight:700;font-size:clamp(16px,2.2vw,23px);margin-top:6px}
+  .caption .pair .to{color:var(--primary)}
+  .caption .meta{font-size:12px;color:var(--secondary);margin-top:8px}
+  .caption .meta b{color:var(--text)}
+  .corner{position:absolute;top:12px;left:16px;font-size:10.5px;letter-spacing:.06em;
+    color:var(--muted);text-transform:uppercase}
+  .corner b{color:var(--secondary)}
+
+  /* ---------- tape ---------- */
+  .tape{list-style:none;margin:0;padding:0}
+  .trow{display:grid;grid-template-columns:58px 88px minmax(0,1fr) auto;gap:8px;align-items:center;
+    padding:5px 12px;border-bottom:1px solid rgba(55,32,27,.5);border-left:2px solid transparent}
+  .trow.fresh{border-left-color:var(--primary);background:var(--primary-dim);animation:fade 1.4s ease-out}
+  @keyframes fade{from{background:var(--primary-dim)}to{background:transparent}}
+  .trow .t{color:var(--faint)} .trow .w{color:var(--muted)}
+  .trow .pair{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .trow .pair .s{color:var(--text)} .trow .pair .ar{color:var(--muted)} .trow .pair .b{color:var(--primary)}
+  .gtag{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    border:1px solid var(--border);padding:0 4px;line-height:15px}
+  .gtag.ambiguous{border-style:dashed} .gtag.clean,.gtag.direct{color:var(--secondary);border-color:var(--border2)}
+
+  .foot{grid-column:1/-1}
+  @media (max-width:1080px){.body{grid-template-columns:196px minmax(0,1fr) 300px}}
+  @media (max-width:860px){.body{grid-template-columns:minmax(0,1fr) 300px}.rail{display:none}}
+  @media (max-width:640px){.body{grid-template-columns:minmax(0,1fr)}.tape-col{display:none}.tag{display:none}}
+  @media (prefers-reduced-motion:reduce){.spark{transition:none}.trow.fresh{animation:none}}
+</style>
+
+<div class="app">
+  <!-- STRIP -->
+  <header class="strip">
+    <div class="brand">
+      <svg viewBox="0 0 40 30" aria-hidden="true">
+        <g fill="var(--primary)">
+          <rect x="24" y="3" width="4" height="4"/><rect x="28" y="5" width="4" height="4"/>
+          <rect x="17" y="5" width="4" height="4"/><rect x="12" y="7" width="4" height="4"/>
+          <rect x="9" y="11" width="4" height="4"/><rect x="11" y="15" width="4" height="4"/>
+          <rect x="16" y="18" width="4" height="4"/><rect x="21" y="18" width="4" height="4"/>
+          <rect x="26" y="16" width="4" height="4"/><rect x="30" y="12" width="4" height="4"/>
+          <rect x="21" y="9" width="4" height="4" fill="#FF9E7A"/>
+          <rect x="5" y="20" width="4" height="4"/><rect x="1" y="23" width="4" height="4"/>
+        </g>
+        <circle cx="29" cy="8.5" r="1.3" fill="#0A0605"/>
+      </svg>
+      <div>
+        <div class="wm">SHRIMP</div>
+        <div class="tag">on-chain intel for the little guy</div>
+      </div>
+    </div>
+    <nav class="views" id="views">
+      <button data-view="radar"><kbd>1</kbd>Radar</button>
+      <button data-view="flow"><kbd>2</kbd>Flow</button>
+      <button class="on" data-view="map"><kbd>3</kbd>Map</button>
+    </nav>
+    <div class="status">
+      <span class="badge" id="badge">Replay 20&times;</span>
+      <span class="clock">CLOCK <b id="clock">17:22:57</b> UTC</span>
+      <span class="range" id="range">16:52:57&ndash;17:22:57</span>
+      <button id="pause">Pause</button>
+    </div>
+  </header>
+
+  <!-- WORKBAR -->
+  <div class="workbar" id="workbar"></div>
+
+  <!-- BODY -->
+  <div class="body">
+    <!-- rail -->
+    <section class="col rail">
+      <div class="ph"><div class="eb">observed &middot; last 10 min</div><h2>Top Inflow</h2></div>
+      <div id="inflow"></div>
+    </section>
+
+    <!-- center -->
+    <section class="col center">
+      <!-- RADAR -->
+      <div class="view" data-view="radar">
+        <div class="rlist">
+          <table class="rt">
+            <thead><tr>
+              <th>#</th><th>score</th><th>coin</th><th>from</th>
+              <th class="n">wallets</th><th class="n">net&nbsp;usdc</th><th class="n">1h</th><th>inflow</th>
+            </tr></thead>
+            <tbody id="radarBody"></tbody>
+          </table>
+        </div>
+        <div class="legend">Ranked by observed net inflow over the window. A ranking of what the chain recorded &mdash; <b>not a prediction, not advice.</b></div>
+      </div>
+
+      <!-- FLOW -->
+      <div class="view" data-view="flow">
+        <div class="flowstage"><svg class="flow-svg" id="flowSvg" viewBox="0 0 640 420" preserveAspectRatio="xMidYMid meet"></svg></div>
+        <div class="legend">Ribbon width is distinct wallets that sold the source and then bought <b>the destination</b> inside the 30-min window. Weight counts wallets, never rows.</div>
+      </div>
+
+      <!-- MAP -->
+      <div class="view on" data-view="map">
+        <div class="mapstage">
+          <div class="corner">Explore &middot; <b>PONS v2 sample</b> &middot; 30 min window</div>
+          <svg class="map-svg" id="mapSvg" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="caption">
+            <div class="n"><span class="u" id="capN">54</span> WALLETS</div>
+            <div class="pair">sold <span id="capS">Piecoin&middot;1a01</span> <span class="to">&rarr; bought <span id="capB">TruffleHog&middot;7b08</span></span></div>
+            <div class="meta" id="capMeta">within 30 min &middot; <b>597</b> observed sequences &middot; ambiguous <b>0</b>, not counted</div>
+          </div>
+        </div>
+        <div class="legend">Each node is a coin; the bright edge is the hottest route this window. Node size follows observed inflow. <b>Addresses, timestamps and tx behind every number.</b></div>
+      </div>
+    </section>
+
+    <!-- tape -->
+    <section class="col tape-col">
+      <div class="ph"><div class="eb">live &middot; observed sequences</div><h2 id="tapeHead">Tape</h2></div>
+      <ul class="tape" id="tape"></ul>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SVGNS='http://www.w3.org/2000/svg';
+  const el=(t,a={})=>{const e=document.createElementNS(SVGNS,t);for(const k in a)e.setAttribute(k,a[k]);return e};
+  const $=id=>document.getElementById(id);
+
+  const INFLOW=[
+    {c:"TruffleHog·7b08",w:54,u:4820,ven:"PONS",sc:55,p:129,src:"Piecoin·1a01",sw:54,x:1},
+    {c:"INFERNET·d7f0",w:41,u:3910,ven:"UniV4",sc:35,p:399,src:"EYWA·d7b5",sw:3,x:2},
+    {c:"MINER·5ea6",w:33,u:3120,ven:"UniV4",sc:51,p:1005,src:"AUTON·5eab",sw:9,x:2},
+    {c:"FEEZ·0c19",w:28,u:2450,ven:"PONS",sc:83,p:789,src:"credit·13aa",sw:13,x:2},
+    {c:"TruffleHog·bd82",w:22,u:1980,ven:"PONS",sc:78,p:303,src:"egregore·11af",sw:16,x:2},
+    {c:"SCRAPS·9de2",w:19,u:1420,ven:"PONS",sc:44,p:58,src:"ogregore·2f0a",sw:6,x:1},
+    {c:"CAT·fd23",w:14,u:980,ven:"PONS",sc:22,p:-24,src:"CASHPIG·38d6",sw:5,x:2},
+    {c:"PACKZ·4a8c",w:11,u:540,ven:"UniV4",sc:23,p:-17,src:"AUTON·5eab",sw:16,x:2},
+  ];
+  const HOT={sold:"Piecoin·1a01",bought:"TruffleHog·7b08",wallets:54,rows:597,ambiguous:0};
+  const FLOW=[{c:"Piecoin·1a01",w:54},{c:"SCRAPS·9de2",w:12},{c:"AUTON·5eab",w:7},{c:"egregore·11af",w:4},{c:"credit·13aa",w:3}];
+  const COINS=["TruffleHog·7b08","Piecoin·1a01","SCRAPS·9de2","MINER·5ea6","INFERNET·d7f0","CAT·fd23","PACKZ·4a8c","FEEZ·0c19","LUNAH·0070","SAGA·03dc","EYWA·d7b5","AUTON·5eab","CASHPIG·38d6","egregore·11af","PONSLAB·bdb0","HIPPOX·77a2","VLADIATOR·2e1d","BUILDING·d5f2","Harvest·03dc","TGCOINS·9515"];
+  const HEX="0123456789abcdef", rhex=n=>Array.from({length:n},()=>HEX[Math.random()*16|0]).join('');
+  const pct=p=>`<span class="pct ${p>=0?'up':'dn'}">${p>=0?'+':''}${p}%</span>`;
+
+  // ---- rail ----
+  $('inflow').innerHTML=INFLOW.map(r=>`
+    <div class="inf"><div class="sc">${r.sc}</div>
+      <div class="cn">${r.c}</div>
+      <div class="sub">&larr; ${r.src} ${r.sw} +${r.x} &nbsp; ${pct(r.p)} 1h</div>
+    </div>`).join('');
+
+  // ---- radar ----
+  const maxU=Math.max(...INFLOW.map(r=>r.u));
+  $('radarBody').innerHTML=INFLOW.map((r,i)=>`
+    <tr class="row ${i===0?'hot':''}">
+      <td class="rank">${i+1}</td>
+      <td><span class="sc">${r.sc}</span></td>
+      <td><span class="cn">${r.c}</span><span class="ad">${r.ven}</span></td>
+      <td class="frm">&larr; <b>${r.src}</b> ${r.sw}</td>
+      <td class="n">${r.w}</td>
+      <td class="n">${r.u.toLocaleString()}</td>
+      <td class="n">${pct(r.p)}</td>
+      <td><span class="spark" data-w="${Math.round(100*r.u/maxU)}"></span></td>
+    </tr>`).join('');
+
+  // ---- flow ribbons ----
+  (function(){
+    const svg=$('flowSvg'), dx=470, dy=210, total=FLOW.reduce((a,b)=>a+b.w,0);
+    FLOW.forEach((f,i)=>{
+      const y=64+i*66, x=150;
+      const w=Math.max(2,f.w/4.5);
+      const p=el('path',{d:`M${x},${y} C ${(x+dx)/2},${y} ${(x+dx)/2},${dy} ${dx},${dy}`,
+        fill:'none',stroke:'var(--primary)','stroke-width':w,'stroke-opacity':.5,'stroke-linecap':'round'});
+      if(!REDUCED){p.setAttribute('stroke-dasharray',560);p.setAttribute('stroke-dashoffset',560);
+        p.style.transition='stroke-dashoffset .9s ease '+(i*.1)+'s';requestAnimationFrame(()=>p.setAttribute('stroke-dashoffset',0));}
+      svg.appendChild(p);
+      svg.appendChild(el('circle',{cx:x,cy:y,r:4,fill:'var(--primary)'}));
+      const t1=el('text',{x:x-12,y:y-6,'text-anchor':'end'});t1.setAttribute('class','sym');t1.textContent=f.c;svg.appendChild(t1);
+      const t2=el('text',{x:x-12,y:y+11,'text-anchor':'end'});t2.setAttribute('class','n');t2.textContent=f.w+' wallets';svg.appendChild(t2);
+    });
+    svg.appendChild(el('circle',{cx:dx,cy:dy,r:22,fill:'var(--primary)'}));
+    const rl=el('text',{x:dx,y:dy-38,'text-anchor':'middle'});rl.setAttribute('class','role');rl.textContent='DESTINATION';svg.appendChild(rl);
+    const bt=el('text',{x:dx,y:dy+58,'text-anchor':'middle'});bt.setAttribute('class','big');bt.textContent=HOT.bought;svg.appendChild(bt);
+    const nt=el('text',{x:dx,y:dy+80,'text-anchor':'middle'});nt.setAttribute('class','n');nt.textContent=total+' wallets in · clean '+total+' · ambiguous 0';svg.appendChild(nt);
+  })();
+
+  // ---- map graph ----
+  (function(){
+    const svg=$('mapSvg');
+    // faint background coin nodes (a light constellation), positioned deterministically
+    const bg=[[140,120,7],[260,90,5],[700,110,6],[790,220,5],[620,430,7],[210,400,6],[120,300,5],[760,400,6],[400,150,4],[500,470,5]];
+    bg.forEach(([x,y,r],i)=>{
+      svg.appendChild(el('circle',{cx:x,cy:y,r,fill:'none',stroke:'var(--border2)','stroke-width':1}));
+      const t=el('text',{x:x+r+6,y:y+3});t.setAttribute('class','nlabel');t.setAttribute('fill','var(--faint)');t.textContent=COINS[(i+4)%COINS.length];svg.appendChild(t);
+    });
+    // the hot edge A(sold, lower) -> B(bought, upper)
+    const ax=450,ay=400,bx=450,by=150;
+    const edgeBase=el('line',{x1:ax,y1:ay,x2:bx,y2:by,stroke:'var(--border2)','stroke-width':2});svg.appendChild(edgeBase);
+    const edge=el('line',{x1:ax,y1:ay,x2:bx,y2:by,stroke:'var(--primary)','stroke-width':2.5,
+      'stroke-dasharray':'5 9','stroke-linecap':'round'});
+    if(!REDUCED){const an=el('animate',{attributeName:'stroke-dashoffset',from:'0',to:'-28',dur:'.9s',repeatCount:'indefinite'});edge.appendChild(an);}
+    svg.appendChild(edge);
+    // travelling wallet dots
+    if(!REDUCED){for(let i=0;i<6;i++){const c=el('circle',{r:3,fill:'#FF9E7A'});
+      const m=el('animateMotion',{dur:'1.9s',repeatCount:'indefinite',begin:(i*0.32)+'s',path:`M${ax},${ay} L${bx},${by}`});
+      c.appendChild(m);svg.appendChild(c);} }
+    // node A
+    svg.appendChild(el('circle',{cx:ax,cy:ay,r:13,fill:'none',stroke:'#FF9E7A','stroke-width':2}));
+    const aR=el('text',{x:ax,y:ay+34,'text-anchor':'middle'});aR.setAttribute('class','nlabel');aR.setAttribute('fill','var(--secondary)');aR.textContent='A · SOLD';svg.appendChild(aR);
+    const aS=el('text',{x:ax,y:ay+50,'text-anchor':'middle'});aS.setAttribute('font-family','var(--sans)');aS.setAttribute('font-weight','700');aS.setAttribute('font-size','15');aS.setAttribute('fill','#FF9E7A');aS.setAttribute('text-anchor','middle');aS.textContent=HOT.sold;svg.appendChild(aS);
+    // node B (glowing)
+    const halo=el('circle',{cx:bx,cy:by,r:20,fill:'var(--primary)','fill-opacity':.25});
+    if(!REDUCED){halo.appendChild(el('animate',{attributeName:'r',values:'18;30;18',dur:'2.6s',repeatCount:'indefinite'}));halo.appendChild(el('animate',{attributeName:'fill-opacity',values:'.28;.05;.28',dur:'2.6s',repeatCount:'indefinite'}));}
+    svg.appendChild(halo);
+    svg.appendChild(el('circle',{cx:bx,cy:by,r:16,fill:'var(--primary)'}));
+    const bR=el('text',{x:bx,y:by-30,'text-anchor':'middle'});bR.setAttribute('class','nlabel');bR.setAttribute('fill','var(--primary)');bR.textContent='B · BOUGHT';svg.appendChild(bR);
+    const bS=el('text',{x:bx,y:by-12,'text-anchor':'middle'});bS.setAttribute('font-family','var(--sans)');bS.setAttribute('font-weight','800');bS.setAttribute('font-size','18');bS.setAttribute('fill','var(--text)');bS.setAttribute('text-anchor','middle');bS.textContent=HOT.bought;svg.appendChild(bS);
+  })();
+
+  // ---- workbar per view ----
+  const WB={
+    radar:`<span class="eb">Radar</span><span class="sep"></span><span><b>${INFLOW.length}</b> coins with observed inflow</span><span class="sep"></span><span>top: <b>${INFLOW[0].c}</b> &middot; <b>${INFLOW[0].w}</b> wallets in</span>`,
+    flow:`<span class="eb">Flow</span><span class="sep"></span><span>into <b>${HOT.bought}</b></span><span class="sep"></span><span><b>${FLOW.reduce((a,b)=>a+b.w,0)}</b> wallets across <b>${FLOW.length}</b> sources</span>`,
+    map:`<span class="eb">Map</span><span class="sep"></span><span><b>${HOT.wallets}</b> wallets sold <b>${HOT.sold}</b> <span class="to">&rarr;</span> bought <b>${HOT.bought}</b></span><span class="sep"></span><span><b>${HOT.rows}</b> rows</span>`,
+  };
+
+  // ---- tabs ----
+  function show(v){
+    document.querySelectorAll('.views button').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+    document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.dataset.view===v));
+    $('workbar').innerHTML=WB[v];
+    if(v==='radar')requestAnimationFrame(()=>document.querySelectorAll('.spark').forEach(s=>s.style.width=s.dataset.w+'%'));
+  }
+  $('views').addEventListener('click',e=>{const b=e.target.closest('button');if(b)show(b.dataset.view)});
+  addEventListener('keydown',e=>{const m={'1':'radar','2':'flow','3':'map'}[e.key];if(m)show(m)});
+
+  // ---- clock + tape ----
+  let clock=17*3600+22*60+57, paused=false;
+  const fmt=s=>[s/3600|0,(s%3600)/60|0,s%60].map(n=>String(n).padStart(2,'0')).join(':');
+  const tape=$('tape');
+  function seq(){
+    const hot=Math.random()<0.42; let s,b;
+    if(hot){s=HOT.sold;b=HOT.bought;}else{s=COINS[Math.random()*COINS.length|0];do{b=COINS[Math.random()*COINS.length|0]}while(b===s);}
+    const r=Math.random(),g=r<0.8?'clean':(r<0.88?'direct':'ambiguous');
+    return{t:fmt(clock),w:'0x'+rhex(4)+'..'+rhex(4),s,b,g};
+  }
+  function rowHTML(x){return `<span class="t">${x.t}</span><span class="w">${x.w}</span>`+
+    `<span class="pair"><span class="s">${x.s}</span> <span class="ar">&rarr;</span> <span class="b">${x.b}</span></span>`+
+    `<span class="gtag ${x.g}">${x.g[0]}</span>`;}
+  for(let i=0;i<16;i++){clock+=3;const li=document.createElement('li');li.className='trow';li.innerHTML=rowHTML(seq());tape.appendChild(li);}
+  $('clock').textContent=fmt(clock);
+  function tick(){if(paused)return;clock+=3;$('clock').textContent=fmt(clock);
+    const li=document.createElement('li');li.className='trow fresh';li.innerHTML=rowHTML(seq());tape.prepend(li);
+    while(tape.children.length>44)tape.lastElementChild.remove();}
+  setInterval(tick,720);
+
+  $('pause').addEventListener('click',()=>{paused=!paused;
+    $('pause').textContent=paused?'Resume':'Pause';
+    const bd=$('badge');bd.classList.toggle('paused',paused);bd.innerHTML=paused?'Paused':'Replay 20&times;';});
+
+  show('map');
+})();
+</script>
