@@ -12,7 +12,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from .models import InflowRow, Rotation, Trade
+from . import sample
+from .models import FlowSource, InflowRow, Rotation, RouteEdge, Sequence, Trade
 
 _FIXTURES = Path(__file__).resolve().parent.parent / "data" / "fixtures"
 
@@ -69,8 +70,29 @@ def load_inflow() -> list[InflowRow]:
             net_usdc=float(r["net_usdc"]),
             rotations_in=int(r["rotations_in"]),
             venue=r["venue"],
+            score=int(r.get("score", 0)),
+            pct_1h=float(r.get("pct_1h", 0.0)),
+            source=r.get("source", ""),
+            source_wallets=int(r.get("source_wallets", 0)),
+            extra_sources=int(r.get("extra_sources", 0)),
         )
         for r in rows
     ]
     inflow.sort(key=lambda i: i.net_usdc, reverse=True)
     return inflow
+
+
+# --- richer sample-backed views (tape / hero route / flow fan) ------------- #
+def load_tape(n: int = 240) -> list[Sequence]:
+    """A long, time-sorted tape of observed sequences for the streaming panel."""
+    return sample.tape(n)
+
+
+def hot_route() -> RouteEdge:
+    """The single hottest route - the MAP hero."""
+    return sample.hot_route()
+
+
+def flow_sources(dest: str | None = None) -> list[FlowSource]:
+    """Coins rotating into the chosen destination - the FLOW fan."""
+    return sample.flow_sources(dest)

@@ -1,7 +1,10 @@
 [
-  {"coin": "TruffleHog-7b08", "wallets_in": 54, "net_usdc": 12480.55, "rotations_in": 22, "venue": "PONS"},
-  {"coin": "INFERNET-d7f0",  "wallets_in": 35, "net_usdc": 9810.20, "rotations_in": 14, "venue": "UniV4"},
-  {"coin": "LUNAH-0070",     "wallets_in": 26, "net_usdc": 7420.00, "rotations_in": 9,  "venue": "UniV4"},
-  {"coin": "SCRAPS-9de2",    "wallets_in": 41, "net_usdc": 5133.10, "rotations_in": 18, "venue": "PONS"},
-  {"coin": "PACKZ-4a8c",     "wallets_in": 23, "net_usdc": 3980.75, "rotations_in": 6,  "venue": "PONS"}
+  {"coin": "TruffleHog·7b08", "wallets_in": 54, "net_usdc": 4820.0, "rotations_in": 597, "venue": "PONS",  "score": 55, "pct_1h": 129.0,  "source": "Piecoin·1a01",  "source_wallets": 54, "extra_sources": 1},
+  {"coin": "INFERNET·d7f0",  "wallets_in": 41, "net_usdc": 3910.0, "rotations_in": 210, "venue": "UniV4", "score": 35, "pct_1h": 399.0,  "source": "EYWA·d7b5",     "source_wallets": 3,  "extra_sources": 2},
+  {"coin": "MINER·5ea6",     "wallets_in": 33, "net_usdc": 3120.0, "rotations_in": 180, "venue": "UniV4", "score": 51, "pct_1h": 1005.0, "source": "AUTON·5eab",    "source_wallets": 9,  "extra_sources": 2},
+  {"coin": "FEEZ·0c19",      "wallets_in": 28, "net_usdc": 2450.0, "rotations_in": 140, "venue": "PONS",  "score": 83, "pct_1h": 789.0,  "source": "credit·13aa",   "source_wallets": 13, "extra_sources": 2},
+  {"coin": "TruffleHog·bd82","wallets_in": 22, "net_usdc": 1980.0, "rotations_in": 96,  "venue": "PONS",  "score": 78, "pct_1h": 303.0,  "source": "egregore·11af", "source_wallets": 16, "extra_sources": 2},
+  {"coin": "SCRAPS·9de2",    "wallets_in": 19, "net_usdc": 1420.0, "rotations_in": 77,  "venue": "PONS",  "score": 44, "pct_1h": 58.0,   "source": "ogregore·2f0a", "source_wallets": 6,  "extra_sources": 1},
+  {"coin": "CAT·fd23",       "wallets_in": 14, "net_usdc": 980.0,  "rotations_in": 61,  "venue": "PONS",  "score": 22, "pct_1h": -24.0,  "source": "CASHPIG·38d6",  "source_wallets": 5,  "extra_sources": 2},
+  {"coin": "PACKZ·4a8c",     "wallets_in": 11, "net_usdc": 540.0,  "rotations_in": 40,  "venue": "UniV4", "score": 23, "pct_1h": -17.0,  "source": "AUTON·5eab",    "source_wallets": 16, "extra_sources": 2}
 ]

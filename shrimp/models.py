@@ -68,3 +68,50 @@ class InflowRow:
     net_usdc: float      # observed net USDC inflow
     rotations_in: int    # rotations landing on this coin
     venue: str
+    score: int = 0       # 0-99 gauge of recent inflow intensity
+    pct_1h: float = 0.0  # observed price change over the last hour (%)
+    source: str = ""     # the single biggest coin rotating into this one
+    source_wallets: int = 0
+    extra_sources: int = 0  # how many other source coins feed it (the "+N")
+
+
+@dataclass(frozen=True)
+class Sequence:
+    """One tape row: a wallet that sold A then bought B, with its grade."""
+
+    ts: datetime
+    wallet: str
+    sold: str
+    bought: str
+    grade: str
+
+    @property
+    def ts_hhmmss(self) -> str:
+        return self.ts.astimezone(UTC).strftime("%H:%M:%S")
+
+    @property
+    def wallet_short(self) -> str:
+        return f"{self.wallet[:6]}..{self.wallet[-4:]}"
+
+
+@dataclass(frozen=True)
+class RouteEdge:
+    """The single hottest route, for the MAP hero: N wallets sold A -> bought B."""
+
+    sold: str
+    bought: str
+    sold_addr: str
+    bought_addr: str
+    wallets: int      # distinct wallets on this route (the edge weight)
+    rows: int         # sequence rows (a wallet buying nine times is nine rows)
+    ambiguous: int    # rows that also sold other coins, listed, never counted
+    extra_seq: int    # the small "+N sequences" tag on the node
+
+
+@dataclass(frozen=True)
+class FlowSource:
+    """One branch of the FLOW fan: a coin rotating into the chosen destination."""
+
+    coin: str
+    wallets: int
+    grade: str

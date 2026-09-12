@@ -62,19 +62,24 @@ No RPC keys, no account, nothing to sign. The shipped data is a small recorded
 sample so the terminal looks alive on the first command; a live Robinhood Chain
 adapter plugs in behind the same commands later.
 
-## Four views, one dataset
+## Three views, one dataset
 
-![Shrimp Terminal — FEED view](docs/screenshots/feed.svg)
+![Shrimp Terminal — MAP view](docs/screenshots/map.svg)
+
+The full-screen terminal is three panels sharing one session clock: a ranked
+**TOP INFLOW** board on the left, the active view in the center, and a live
+**TAPE** of observed sequences streaming on the right.
 
 | View | Hotkey | What it shows |
 |------|:------:|---------------|
-| **FEED**  | `F` | every observed trade in the order it happened, with tx hashes |
-| **RADAR** | `R` | coins ranked by observed inflow, with all parts visible |
-| **FLOW**  | `L` | sold-A → bought-B rotations grouped by route |
-| **MAP**   | `M` | coins laid out by venue, sized by observed inflow |
+| **RADAR** | `1` / `R` | coins ranked by observed inflow — score, wallets, net USDC, 1h change, bar |
+| **FLOW**  | `2` / `L` | the fan of coins rotating into the single hottest destination |
+| **MAP**   | `3` / `M` | the hero graph — *N wallets sold A → bought B*, with the evidence beneath it |
 
 `Space` pauses the replay; `Q` quits. The top bar is the shared session clock —
-mode (`FIXTURE` / `REPLAY` / `LIVE`) and UTC time, mirrored on every view.
+mode (`FIXTURE` / `REPLAY` / `LIVE`), speed and UTC time, mirrored on every view.
+The right-hand **TAPE** is the live feed; `shrimp feed` prints the same stream in
+the plain CLI.
 
 ## What it does for a shrimp
 
@@ -152,8 +157,10 @@ shrimp-terminal/
 ## Roadmap
 
 - [x] Repo skeleton, palette, fixtures, CLI (`feed` / `radar` / `rotations`)
-- [x] Full Textual TUI — FEED (live replay) · RADAR · FLOW · MAP, shared clock
+- [x] Full Textual TUI — three panels (TOP INFLOW · view · live TAPE), shared clock
+- [x] RADAR (board), FLOW (fan), MAP (hero graph) over a rich sample dataset
 - [ ] Whale Watch · Smart Money · Fresh Launches · Risk Radar · My Bags
+- [ ] Multi-chain: Solana adapter (Pump.fun / Raydium), read-only
 - [ ] Live Robinhood Chain adapter (Alchemy / public RPC / indexer)
 - [ ] FastAPI service + `web/` site sharing one dataset
 - [ ] Alert journal with 30 / 60-minute outcomes

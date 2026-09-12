@@ -14,10 +14,10 @@ textual = pytest.importorskip("textual")
 
 from textual.widgets import ContentSwitcher, DataTable
 
-from shrimp.tui.app import FeedView, FlowView, MapView, RadarView, ShrimpApp
+from shrimp.tui.app import FlowView, MapView, RadarView, ShrimpApp, Tape
 
 
-def test_tui_streams_and_switches_all_views():
+def test_tui_streams_tape_and_switches_all_views():
     async def scenario() -> None:
         app = ShrimpApp()
         async with app.run_test() as pilot:
@@ -26,10 +26,11 @@ def test_tui_streams_and_switches_all_views():
             app._tick()
             await pilot.pause(0.02)
 
-            feed = app.query_one(FeedView).query_one(DataTable)
-            assert feed.row_count >= 2
+            tape = app.query_one(Tape).query_one(DataTable)
+            assert tape.row_count >= 2
 
-            for key, expect in [("r", "radar"), ("l", "flow"), ("m", "map"), ("f", "feed")]:
+            # default view is MAP; switch through every view by hotkey
+            for key, expect in [("1", "radar"), ("2", "flow"), ("3", "map")]:
                 await pilot.press(key)
                 await pilot.pause(0.01)
                 assert app.query_one(ContentSwitcher).current == expect
@@ -37,9 +38,9 @@ def test_tui_streams_and_switches_all_views():
             await pilot.press("space")
             assert app._paused is True
 
-            # each view renders its body without raising
-            app.query_one(RadarView)._board()
-            app.query_one(FlowView)._diagram()
-            app.query_one(MapView)._map()
+            # every center view renders its body without raising
+            app.query_one(RadarView).render()
+            app.query_one(FlowView).render()
+            app.query_one(MapView).render()
 
     asyncio.run(scenario())
